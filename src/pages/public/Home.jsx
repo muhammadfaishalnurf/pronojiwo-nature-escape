@@ -50,7 +50,7 @@ const defaultDestinations = [
         category: "Panorama",
         rating: 4.7,
         reviewCount: 85,
-        image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80",
+        image: "https://imgur.com/SHwoqgi",
         description: "Pemandangan bukit hijau dengan kabut pagi yang memesona. Spot foto terbaik untuk menikmati sunrise di atas awan berlatar belakang Gunung Semeru.",
         price: 15000,
         capacity: 150,
@@ -516,7 +516,7 @@ export default function Home() {
                 // Laravel Resource biasanya return { data: [...] }
                 const destData = destRes.data?.data || destRes.data || [];
                 setDestinations(Array.isArray(destData) ? destData : []);
-            } catch (err) {
+            } catch (error) {
                 // Kalau API belum jalan, pakai data default (tidak error)
                 console.warn('Destinations API not available, using defaults.');
                 setDestinations([]);
@@ -527,7 +527,7 @@ export default function Home() {
                 const reviewRes = await api.get('/reviews');
                 const reviewData = reviewRes.data?.data || reviewRes.data || [];
                 setReviews(Array.isArray(reviewData) ? reviewData : []);
-            } catch (err) {
+            } catch (error) {
                 console.warn('Reviews API not available, using defaults.');
                 setReviews([]);
             }
