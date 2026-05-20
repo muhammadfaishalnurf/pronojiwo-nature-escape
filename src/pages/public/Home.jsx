@@ -60,7 +60,7 @@ const defaultDestinations = [
     {
         id: 3,
         name: "Air Terjun Kapas Biru",
-        location: "Desa Tumpak Sewu, Pronojiwo",
+        location: "Pronojiwo, Lumajang",
         category: "Air Terjun",
         rating: 4.8,
         reviewCount: 98,
