@@ -7,6 +7,7 @@ const adminMenus = [
     { path: "/admin/destinasi", label: "Destinasi", icon: "🏔️" },
     { path: "/admin/tiket", label: "Tiket", icon: "🎫" },
     { path: "/admin/ulasan", label: "Ulasan", icon: "💬" },
+    { path: "/admin/scan-tiket", label: "Scan Tiket", icon: "🔍" }
 ];
 
 const superAdminMenus = [
