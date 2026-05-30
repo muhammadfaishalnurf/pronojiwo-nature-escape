@@ -2,151 +2,165 @@ import { useState, useEffect } from "react";
 import AdminLayout from "../../components/layout/AdminLayout";
 import api from "../../api/axios";
 
-const ROLES = ["user", "admin", "super_admin"];
-// Tambahkan di atas function SAUsers()
-const getRole = (user) => {
-    const r = user.roles?.[0];
-    return typeof r === "string" ? r : (r?.name || "user");
+// Helper normalize roles — bisa array of string atau array of object
+const getRoleName = (roles) => {
+    if (!roles || roles.length === 0) return "user";
+    const first = roles[0];
+    return typeof first === "string" ? first : first?.name || "user";
 };
 
-export default function SAUsers() {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState("");
-    const [modal, setModal] = useState(false);
-    const [editUser, setEditUser] = useState(null);
-    const [form, setForm] = useState({ name: "", email: "", password: "", role: "user" });
-    const [saving, setSaving] = useState(false);
+export default function SuperAdminUsers() {
+    const [users,        setUsers]        = useState([]);
+    const [destinations, setDestinations] = useState([]);
+    const [loading,      setLoading]      = useState(true);
+    const [modal,        setModal]        = useState(null);
+    const [selected,     setSelected]     = useState(null);
+    const [form,         setForm]         = useState({ name: "", email: "", password: "", role: "user", destination_id: "" });
+    const [roleForm,     setRoleForm]     = useState({ role: "user", destination_id: "" });
+    const [saving,       setSaving]       = useState(false);
+    const [error,        setError]        = useState("");
 
-    const fetchUsers = async () => {
-        setLoading(true);
+    useEffect(() => {
+        document.title = "Kelola Pengguna - Super Admin";
+        fetchAll();
+    }, []);
+
+    const fetchAll = async () => {
         try {
-            const res = await api.get("/super-admin/users");
-            const data = res.data?.data || res.data || [];
-            // Normalisasi roles dari objek → string
-            const normalized = data.map(u => ({
-                ...u,
-                roles: Array.isArray(u.roles)
-                    ? u.roles.map(r => typeof r === "string" ? r : r.name)
-                    : []
-            }));
-            setUsers(normalized);
-        } catch { setUsers([]); }
-        finally { setLoading(false); }
-    };
-
-    useEffect(() => { fetchUsers(); }, []);
-
-    const openAdd = () => { setEditUser(null); setForm({ name: "", email: "", password: "", role: "user" }); setModal(true); };
-    const openEdit = (u) => {
-        setEditUser(u);
-        setForm({
-            name: u.name,
-            email: u.email,
-            password: "",
-            role: getRole(u)  // ← pakai helper getRole
-        });
-        setModal(true);
-    };
-    const handleSave = async (e) => {
-        e.preventDefault();
-        setSaving(true);
-        try {
-            if (editUser) {
-                await api.put(`/super-admin/users/${editUser.id}`, { name: form.name, email: form.email, ...(form.password && { password: form.password }) });
-                await api.post(`/super-admin/users/${editUser.id}/assign-role`, { role: form.role });
-            } else {
-                const res = await api.post("/super-admin/users", form);
-                await api.post(`/super-admin/users/${res.data?.data?.id || res.data?.id}/assign-role`, { role: form.role });
-            }
-            setModal(false);
-            fetchUsers();
-        } catch (err) {
-            alert(err.response?.data?.message || "Gagal menyimpan.");
-        } finally { setSaving(false); }
-    };
-
-    const handleDelete = async (id) => {
-        if (!window.confirm("Hapus pengguna ini?")) return;
-        try {
-            await api.delete(`/super-admin/users/${id}`);
-            fetchUsers();
-        } catch { alert("Gagal menghapus."); }
-    };
-
-    const roleColor = (role) => {
-        switch (role) {
-            case "super_admin": return "bg-violet-100 text-violet-700";
-            case "admin": return "bg-amber-100 text-amber-700";
-            default: return "bg-emerald-100 text-emerald-700";
+            const [usersRes, destRes] = await Promise.all([
+                api.get("/super-admin/users"),
+                api.get("/destinations"),
+            ]);
+            setUsers(usersRes.data?.data || []);
+            setDestinations(destRes.data?.data || []);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const filtered = users.filter(u =>
-        !search ||
-        u.name?.toLowerCase().includes(search.toLowerCase()) ||
-        u.email?.toLowerCase().includes(search.toLowerCase())
-    );
+    const openAdd  = () => { setForm({ name: "", email: "", password: "", role: "user", destination_id: "" }); setError(""); setModal("add"); };
+    const openEdit = (u) => { setSelected(u); setForm({ name: u.name, email: u.email, password: "", role: getRoleName(u.roles), destination_id: u.destination_id || "" }); setError(""); setModal("edit"); };
+    const openRole = (u) => { setSelected(u); setRoleForm({ role: getRoleName(u.roles), destination_id: u.destination_id || "" }); setError(""); setModal("role"); };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setSaving(true); setError("");
+        try {
+            if (modal === "add") {
+                await api.post("/super-admin/users", form);
+            } else {
+                await api.put(`/super-admin/users/${selected.id}`, form);
+            }
+            await fetchAll();
+            setModal(null);
+        } catch (err) {
+            setError(err.response?.data?.message || "Gagal menyimpan.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleAssignRole = async (e) => {
+        e.preventDefault();
+        setSaving(true); setError("");
+        try {
+            await api.post(`/super-admin/users/${selected.id}/assign-role`, roleForm);
+            await fetchAll();
+            setModal(null);
+        } catch (err) {
+            setError(err.response?.data?.message || "Gagal update role.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm("Hapus pengguna ini?")) return;
+        try {
+            await api.delete(`/super-admin/users/${id}`);
+            setUsers(prev => prev.filter(u => u.id !== id));
+        } catch (err) {
+            alert(err.response?.data?.message || "Gagal menghapus.");
+        }
+    };
+
+    const roleBadge = (roles) => {
+        const role = getRoleName(roles);
+        const map = {
+            super_admin: "bg-purple-100 text-purple-700 border-purple-200",
+            admin:       "bg-blue-100 text-blue-700 border-blue-200",
+            user:        "bg-gray-100 text-gray-600 border-gray-200",
+        };
+        return <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${map[role] || map.user}`}>{role}</span>;
+    };
 
     return (
-        <AdminLayout title="Kelola Pengguna">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-gray-100">
-                    <input type="text" placeholder="Cari nama atau email..."
-                        value={search} onChange={e => setSearch(e.target.value)}
-                        className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 max-w-sm" />
+        <AdminLayout>
+            <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 className="text-2xl font-black text-gray-900">Kelola Pengguna</h1>
+                        <p className="text-gray-500 text-sm mt-0.5">Atur akun, role, dan assign destinasi untuk admin</p>
+                    </div>
                     <button onClick={openAdd}
-                        className="px-4 py-2 rounded-xl bg-violet-700 hover:bg-violet-600 text-white font-bold text-xs flex items-center gap-1.5 transition-colors">
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2">
                         + Tambah Pengguna
                     </button>
                 </div>
 
                 {loading ? (
-                    <div className="p-8 text-center text-gray-400 text-sm">Memuat data...</div>
-                ) : filtered.length === 0 ? (
-                    <div className="text-center py-16 text-gray-400">
-                        <p className="text-4xl mb-2">👥</p>
-                        <p className="text-sm">Tidak ada pengguna ditemukan.</p>
-                    </div>
+                    <div className="space-y-3">{[...Array(5)].map((_,i) => <div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse"/>)}</div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <table className="w-full text-sm">
-                            <thead>
-                                <tr className="bg-gray-50">
-                                    {["#", "Nama", "Email", "Role", "Bergabung", "Aksi"].map(h => (
-                                        <th key={h} className="text-left px-6 py-3 text-xs font-black text-gray-400 uppercase tracking-wider">{h}</th>
-                                    ))}
+                            <thead className="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th className="text-left px-4 py-3 font-bold text-gray-600 text-xs uppercase">Pengguna</th>
+                                    <th className="text-left px-4 py-3 font-bold text-gray-600 text-xs uppercase">Role</th>
+                                    <th className="text-left px-4 py-3 font-bold text-gray-600 text-xs uppercase">Destinasi (Admin)</th>
+                                    <th className="text-left px-4 py-3 font-bold text-gray-600 text-xs uppercase">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {filtered.map((u, i) => (
-                                    <tr key={u.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-3 text-gray-400 text-xs">{i + 1}</td>
-                                        <td className="px-6 py-3">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center text-white font-black text-xs flex-shrink-0">
+                                {users.map(u => (
+                                    <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center text-white font-black text-sm flex-shrink-0">
                                                     {u.name?.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-bold text-gray-800">{u.name}</span>
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{u.name}</p>
+                                                    <p className="text-xs text-gray-400">{u.email}</p>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-3 text-gray-500 text-xs">{u.email}</td>
-                                        <td className="px-6 py-3">
-                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${roleColor((getRole(u)))}`}>
-                                                {typeof (getRole(u)) === "string" ? (getRole(u)) : (getRole(u))?.name || "user"}
-                                            </span>
+                                        <td className="px-4 py-3">{roleBadge(u.roles)}</td>
+                                        <td className="px-4 py-3">
+                                            {getRoleName(u.roles) === "admin" ? (
+                                                u.destination ? (
+                                                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">
+                                                        📍 {u.destination.nama_wisata}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-red-500 font-semibold">⚠️ Belum di-assign</span>
+                                                )
+                                            ) : (
+                                                <span className="text-xs text-gray-300">—</span>
+                                            )}
                                         </td>
-                                        <td className="px-6 py-3 text-gray-400 text-xs">
-                                            {u.created_at ? new Date(u.created_at).toLocaleDateString("id-ID") : "-"}
-                                        </td>
-                                        <td className="px-6 py-3">
-                                            <div className="flex items-center gap-2">
+                                        <td className="px-4 py-3">
+                                            <div className="flex gap-2">
+                                                <button onClick={() => openRole(u)}
+                                                    className="text-xs font-bold text-blue-600 hover:text-blue-500 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                                                    Set Role
+                                                </button>
                                                 <button onClick={() => openEdit(u)}
-                                                    className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-bold transition-colors">
+                                                    className="text-xs font-bold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
                                                     Edit
                                                 </button>
                                                 <button onClick={() => handleDelete(u.id)}
-                                                    className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-xs font-bold transition-colors">
+                                                    className="text-xs font-bold text-red-600 hover:text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
                                                     Hapus
                                                 </button>
                                             </div>
@@ -159,48 +173,89 @@ export default function SAUsers() {
                 )}
             </div>
 
-            {/* Modal */}
-            {modal && (
-                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                            <h3 className="font-black text-gray-900">{editUser ? "Edit Pengguna" : "Tambah Pengguna Baru"}</h3>
-                            <button onClick={() => setModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
-                        </div>
-                        <form onSubmit={handleSave} className="p-6 space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
-                                <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+            {/* Modal Add/Edit */}
+            {(modal === "add" || modal === "edit") && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setModal(null)}>
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="font-black text-gray-900 mb-4">{modal === "add" ? "Tambah Pengguna" : "Edit Pengguna"}</h3>
+                        {error && <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg">{error}</div>}
+                        <form onSubmit={handleSave} className="space-y-3">
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Nama</label>
+                                <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required
+                                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-emerald-500"/>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
-                                <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Email</label>
+                                <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required
+                                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-emerald-500"/>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase">
-                                    Password {editUser && <span className="text-gray-400 normal-case font-normal">(kosongkan jika tidak diubah)</span>}
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-1">
+                                    Password {modal === "edit" && <span className="text-gray-400 font-normal">(kosongkan jika tidak diubah)</span>}
                                 </label>
-                                <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                                    required={!editUser} placeholder={editUser ? "Kosongkan jika tidak diubah" : ""}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Role</label>
-                                <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 bg-white">
-                                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                                </select>
+                                <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})}
+                                    {...(modal === "add" ? {required: true} : {})}
+                                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-emerald-500"/>
                             </div>
                             <div className="flex gap-3 pt-2">
-                                <button type="button" onClick={() => setModal(false)}
-                                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors">
-                                    Batal
-                                </button>
+                                <button type="button" onClick={() => setModal(null)}
+                                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-gray-600 font-bold text-sm hover:bg-gray-50">Batal</button>
                                 <button type="submit" disabled={saving}
-                                    className="flex-1 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-600 text-white font-bold text-sm transition-colors disabled:opacity-60">
+                                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm disabled:opacity-60">
                                     {saving ? "Menyimpan..." : "Simpan"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Set Role + Assign Destinasi */}
+            {modal === "role" && selected && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setModal(null)}>
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="font-black text-gray-900 mb-1">Set Role Pengguna</h3>
+                        <p className="text-sm text-gray-400 mb-4">{selected.name} · {selected.email}</p>
+                        {error && <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg">{error}</div>}
+                        <form onSubmit={handleAssignRole} className="space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase block mb-2">Role</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {["user", "admin", "super_admin"].map(r => (
+                                        <button key={r} type="button"
+                                            onClick={() => setRoleForm({...roleForm, role: r, destination_id: r !== "admin" ? "" : roleForm.destination_id})}
+                                            className={`py-2.5 rounded-xl border text-xs font-bold transition-all ${roleForm.role === r ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}>
+                                            {r === "super_admin" ? "Super Admin" : r === "admin" ? "Admin" : "User"}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {roleForm.role === "admin" && (
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase block mb-1">
+                                        Assign Destinasi <span className="text-red-400">*</span>
+                                    </label>
+                                    <p className="text-xs text-gray-400 mb-2">Admin hanya bisa kelola data destinasi yang di-assign.</p>
+                                    <select value={roleForm.destination_id}
+                                        onChange={e => setRoleForm({...roleForm, destination_id: e.target.value})}
+                                        required
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-emerald-500 bg-white">
+                                        <option value="">-- Pilih Destinasi --</option>
+                                        {destinations.map(d => (
+                                            <option key={d.id} value={d.id}>{d.nama_wisata}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 pt-1">
+                                <button type="button" onClick={() => setModal(null)}
+                                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-gray-600 font-bold text-sm hover:bg-gray-50">Batal</button>
+                                <button type="submit" disabled={saving}
+                                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm disabled:opacity-60">
+                                    {saving ? "Menyimpan..." : "Simpan Role"}
                                 </button>
                             </div>
                         </form>
