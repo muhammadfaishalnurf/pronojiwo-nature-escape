@@ -2,14 +2,35 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
+// Toast sederhana inline (tidak perlu import terpisah)
+function ToastSuccess({ message, onClose }) {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        requestAnimationFrame(() => setVisible(true));
+        const t = setTimeout(() => { setVisible(false); setTimeout(onClose, 300); }, 2500);
+        return () => clearTimeout(t);
+    }, []);
+
+    return (
+        <div className={`fixed top-6 right-6 z-[9999] transition-all duration-300 ${visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`}>
+            <div className="bg-emerald-600 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 min-w-[260px]">
+                <span className="text-xl">✅</span>
+                <p className="font-bold text-sm flex-1">{message}</p>
+            </div>
+        </div>
+    );
+}
+
 export default function Login() {
-    const { login } = useAuth();
-    const navigate  = useNavigate();
+    const { login }  = useAuth();
+    const navigate   = useNavigate();
     const [searchParams] = useSearchParams();
 
     const [form,    setForm]    = useState({ email: "", password: "" });
     const [error,   setError]   = useState("");
     const [loading, setLoading] = useState(false);
+    const [showToast, setShowToast] = useState(false);
 
     useEffect(() => {
         document.title = "Login - Pronojiwo Nature Escape";
@@ -23,26 +44,31 @@ export default function Login() {
         try {
             const userData = await login(form.email, form.password);
 
-            // Cek apakah ada redirect dari booking
-            const bookingRedirect = sessionStorage.getItem("booking_redirect");
-            if (bookingRedirect) {
-                sessionStorage.removeItem("booking_redirect");
-                navigate(bookingRedirect);
-                return;
-            }
+            // Tampilkan toast sukses
+            setShowToast(true);
 
-            // Cek query param redirect
-            const redirectParam = searchParams.get("redirect");
-            if (redirectParam) {
-                navigate(redirectParam);
-                return;
-            }
+            // Tunggu sebentar biar toast kelihatan, baru redirect
+            setTimeout(() => {
+                const bookingRedirect = sessionStorage.getItem("booking_redirect");
+                if (bookingRedirect) {
+                    sessionStorage.removeItem("booking_redirect");
+                    navigate(bookingRedirect);
+                    return;
+                }
 
-            // Default redirect berdasarkan role
-            const roles = userData?.roles || [];
-            if (roles.includes("super_admin")) navigate("/super-admin");
-            else if (roles.includes("admin"))  navigate("/admin");
-            else                                navigate("/");
+                const redirectParam = searchParams.get("redirect");
+                if (redirectParam) {
+                    navigate(redirectParam);
+                    return;
+                }
+
+                const roles = userData?.roles || [];
+                const roleNames = roles.map(r => typeof r === "string" ? r : r?.name);
+                if (roleNames.includes("super_admin")) navigate("/super-admin");
+                else if (roleNames.includes("admin"))  navigate("/admin");
+                else                                    navigate("/");
+            }, 1500);
+
         } catch (err) {
             setError(err.response?.data?.message || "Email atau password salah.");
         } finally {
@@ -52,6 +78,15 @@ export default function Login() {
 
     return (
         <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+
+            {/* Toast sukses login */}
+            {showToast && (
+                <ToastSuccess
+                    message="Anda berhasil login! Selamat datang 👋"
+                    onClose={() => setShowToast(false)}
+                />
+            )}
+
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-8">
@@ -71,7 +106,6 @@ export default function Login() {
                         </div>
                     )}
 
-                    {/* Info jika diarahkan dari booking */}
                     {(searchParams.get("redirect") || sessionStorage.getItem("booking_redirect")) && (
                         <div className="mb-4 px-4 py-3 rounded-xl bg-emerald-900/30 border border-emerald-700/50 text-emerald-400 text-sm">
                             🔐 Login terlebih dahulu untuk melanjutkan pemesanan tiket.
@@ -104,7 +138,7 @@ export default function Login() {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || showToast}
                             className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm uppercase tracking-widest transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
                         >
                             {loading ? (
@@ -115,7 +149,7 @@ export default function Login() {
                                     </svg>
                                     Masuk...
                                 </>
-                            ) : "Masuk"}
+                            ) : showToast ? "Mengalihkan..." : "Masuk"}
                         </button>
                     </form>
 

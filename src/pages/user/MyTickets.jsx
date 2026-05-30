@@ -19,14 +19,18 @@ export default function MyTickets() {
 
     const statusBadge = (status) => {
         const map = {
-            confirmed: { label: "Aktif",    color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-            pending:   { label: "Pending",  color: "bg-amber-100 text-amber-700 border-amber-200" },
-            cancelled: { label: "Batal",    color: "bg-red-100 text-red-700 border-red-200" },
-            used:      { label: "Terpakai", color: "bg-gray-100 text-gray-500 border-gray-200" },
+            confirmed: { label: "Aktif ✓",   color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+            pending:   { label: "Pending",    color: "bg-amber-100 text-amber-700 border-amber-200" },
+            cancelled: { label: "Dibatalkan", color: "bg-red-100 text-red-700 border-red-200" },
+            used:      { label: "Terpakai",   color: "bg-gray-100 text-gray-500 border-gray-200" },
         };
         const s = map[status] || map.pending;
         return <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${s.color}`}>{s.label}</span>;
     };
+
+    // QR Code URL dari API qrserver
+    const getQrUrl = (code) =>
+        `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(code)}&size=300x300&margin=10&format=png`;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -59,8 +63,7 @@ export default function MyTickets() {
                 ) : (
                     <div className="space-y-4">
                         {tickets.map(ticket => (
-                            <div key={ticket.id}
-                                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div key={ticket.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                                 <div className="p-5 flex items-start justify-between gap-4">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -78,29 +81,31 @@ export default function MyTickets() {
                                         {ticket.nama_ketua && (
                                             <p className="text-xs text-gray-400 mt-1">Ketua: {ticket.nama_ketua}</p>
                                         )}
-                                        {ticket.status === 'used' && ticket.used_at && (
-                                            <p className="text-xs text-red-400 mt-1 font-semibold">
+                                        {ticket.status === "used" && ticket.used_at && (
+                                            <p className="text-xs text-gray-400 mt-1 font-semibold">
                                                 ✓ Digunakan: {new Date(ticket.used_at).toLocaleString("id-ID")}
+                                            </p>
+                                        )}
+                                        {ticket.status === "pending" && (
+                                            <p className="text-xs text-amber-500 mt-1 font-semibold">
+                                                ⏳ Menunggu pembayaran
                                             </p>
                                         )}
                                     </div>
 
-                                    {/* Tombol lihat QR */}
-                                    {ticket.status === 'confirmed' && (
-                                        <button
-                                            onClick={() => setSelected(ticket)}
+                                    {/* QR Code thumbnail — hanya kalau confirmed */}
+                                    {ticket.status === "confirmed" && (
+                                        <button onClick={() => setSelected(ticket)}
                                             className="flex-shrink-0 flex flex-col items-center gap-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl px-3 py-2 transition-colors">
-                                            <img
-                                                src={ticket.qr_code_url}
-                                                alt="QR"
-                                                className="w-14 h-14 rounded"
-                                            />
+                                            <img src={getQrUrl(ticket.ticket_code)} alt="QR" className="w-14 h-14 rounded"/>
                                             <span className="text-[10px] font-bold text-emerald-700">Lihat QR</span>
                                         </button>
                                     )}
-                                    {ticket.status === 'used' && (
-                                        <div className="flex-shrink-0 flex flex-col items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 opacity-50">
-                                            <img src={ticket.qr_code_url} alt="QR" className="w-14 h-14 rounded grayscale"/>
+
+                                    {/* Tiket used — QR grayscale */}
+                                    {ticket.status === "used" && (
+                                        <div className="flex-shrink-0 flex flex-col items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 opacity-40">
+                                            <img src={getQrUrl(ticket.ticket_code)} alt="QR" className="w-14 h-14 rounded grayscale"/>
                                             <span className="text-[10px] font-bold text-gray-400">Terpakai</span>
                                         </div>
                                     )}
@@ -111,7 +116,7 @@ export default function MyTickets() {
                 )}
             </div>
 
-            {/* Modal QR Code */}
+            {/* Modal QR Code besar */}
             {selected && (
                 <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
                     onClick={() => setSelected(null)}>
@@ -121,23 +126,13 @@ export default function MyTickets() {
                             <p className="text-xs font-mono text-gray-400 mt-0.5">{selected.ticket_code}</p>
                         </div>
 
-                        {/* QR Code besar */}
                         <div className="flex justify-center mb-4">
                             <div className="bg-white p-3 rounded-2xl border-2 border-emerald-200 shadow-inner">
-                                <img
-                                    src={selected.qr_code_url}
-                                    alt={selected.ticket_code}
-                                    className="w-56 h-56"
-                                />
+                                <img src={getQrUrl(selected.ticket_code)} alt={selected.ticket_code} className="w-56 h-56"/>
                             </div>
                         </div>
 
-                        {/* Info tiket */}
                         <div className="bg-gray-50 rounded-2xl p-4 space-y-2 text-sm mb-4">
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Destinasi</span>
-                                <span className="font-bold text-gray-800">{selected.destination?.nama_wisata}</span>
-                            </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-500">Ketua Rombongan</span>
                                 <span className="font-bold text-gray-800">{selected.nama_ketua || "-"}</span>
