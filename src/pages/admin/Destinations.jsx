@@ -62,20 +62,18 @@ export default function AdminDestinations() {
         e.preventDefault();
         setSaving(true);
         try {
+            // Gunakan FormData agar bisa upload foto
             const fd = new FormData();
             fd.append("nama_wisata", form.nama_wisata);
-            fd.append("deskripsi", form.deskripsi || "");
-            fd.append("lokasi_rute", form.lokasi_rute || "");
+            fd.append("deskripsi", form.deskripsi);
+            fd.append("lokasi_rute", form.lokasi_rute);
             fd.append("harga_tiket", form.harga_tiket);
             fd.append("kapasitas", form.kapasitas);
-            fd.append("is_active", form.is_active ? "1" : "0");
-            if (form.foto) {
-                fd.append("foto", form.foto); // file object langsung
-            }
+            fd.append("is_active", form.is_active ? 1 : 0);
+            if (form.foto) fd.append("foto", form.foto);
 
             if (editData) {
-                fd.append("_method", "PUT");
-                
+                fd.append("_method", "PUT"); // Laravel method spoofing
                 await api.post(`/admin/destinations/${editData.id}`, fd);
             } else {
                 await api.post("/admin/destinations", fd);
@@ -83,10 +81,8 @@ export default function AdminDestinations() {
             setModal(false);
             fetchDestinations();
         } catch (err) {
-            alert(err.response?.data?.message || "Gagal menyimpan.");
-        } finally {
-            setSaving(false);
-        }
+            alert(err.response?.data?.message || "Gagal menyimpan data.");
+        } finally { setSaving(false); }
     };
 
     const handleDelete = async (id) => {
@@ -236,7 +232,7 @@ export default function AdminDestinations() {
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Nama Wisata <span className="text-red-400">*</span></label>
                                     <input type="text" value={form.nama_wisata} required
-                                        onChange={e => setForm({ ...form, nama_wisata: e.target.value })}
+                                        onChange={e => setForm({...form, nama_wisata: e.target.value})}
                                         placeholder="cth: Air Terjun Tumpak Sewu"
                                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
                                 </div>
@@ -245,7 +241,7 @@ export default function AdminDestinations() {
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Deskripsi</label>
                                     <textarea rows="3" value={form.deskripsi}
-                                        onChange={e => setForm({ ...form, deskripsi: e.target.value })}
+                                        onChange={e => setForm({...form, deskripsi: e.target.value})}
                                         placeholder="Deskripsikan keindahan destinasi ini..."
                                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none" />
                                 </div>
@@ -254,7 +250,7 @@ export default function AdminDestinations() {
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Lokasi / Rute</label>
                                     <input type="text" value={form.lokasi_rute}
-                                        onChange={e => setForm({ ...form, lokasi_rute: e.target.value })}
+                                        onChange={e => setForm({...form, lokasi_rute: e.target.value})}
                                         placeholder="cth: Desa Sidomulyo, Pronojiwo"
                                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
                                 </div>
@@ -264,14 +260,14 @@ export default function AdminDestinations() {
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Harga Tiket (Rp) <span className="text-red-400">*</span></label>
                                         <input type="number" value={form.harga_tiket} required min="0"
-                                            onChange={e => setForm({ ...form, harga_tiket: e.target.value })}
+                                            onChange={e => setForm({...form, harga_tiket: e.target.value})}
                                             placeholder="20000"
                                             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Kapasitas/Hari <span className="text-red-400">*</span></label>
                                         <input type="number" value={form.kapasitas} required min="1"
-                                            onChange={e => setForm({ ...form, kapasitas: e.target.value })}
+                                            onChange={e => setForm({...form, kapasitas: e.target.value})}
                                             placeholder="100"
                                             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
                                     </div>
@@ -283,7 +279,7 @@ export default function AdminDestinations() {
                                         <p className="font-bold text-sm text-gray-800">Status Destinasi</p>
                                         <p className="text-xs text-gray-400 mt-0.5">Destinasi nonaktif tidak tampil di halaman publik</p>
                                     </div>
-                                    <button type="button" onClick={() => setForm({ ...form, is_active: !form.is_active })}
+                                    <button type="button" onClick={() => setForm({...form, is_active: !form.is_active})}
                                         className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${form.is_active ? "bg-emerald-500" : "bg-gray-300"}`}>
                                         <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300 ${form.is_active ? "translate-x-7" : "translate-x-1"}`} />
                                     </button>
@@ -298,7 +294,7 @@ export default function AdminDestinations() {
                                 </button>
                                 <button type="submit" disabled={saving}
                                     className="flex-1 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-                                    {saving && <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>}
+                                    {saving && <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
                                     {saving ? "Menyimpan..." : "Simpan Destinasi"}
                                 </button>
                             </div>
