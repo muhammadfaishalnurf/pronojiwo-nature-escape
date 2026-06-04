@@ -3,8 +3,9 @@ import AdminLayout from "../../components/layout/AdminLayout";
 import api from "../../api/axios";
 
 const emptyForm = {
-    nama_wisata: "", deskripsi: "", lokasi_rute: "",
-    harga_tiket: "", kapasitas: "", is_active: true, foto: null
+    nama_wisata: "", kategori: "Wisata Alam", deskripsi: "", lokasi_rute: "",
+    harga_tiket: "", kapasitas: "", is_active: true, foto: null,
+    rating: "", koordinat: "", fasilitas: ""
 };
 
 export default function AdminDestinations() {
@@ -38,14 +39,21 @@ export default function AdminDestinations() {
 
     const openEdit = (d) => {
         setEditData(d);
+        // Satu kali setForm — semua field sekaligus, tidak ada yang tertimpa
         setForm({
-            nama_wisata: d.nama_wisata || "",
-            deskripsi: d.deskripsi || "",
-            lokasi_rute: d.lokasi_rute || "",
-            harga_tiket: d.harga_tiket || "",
-            kapasitas: d.kapasitas || "",
-            is_active: d.is_active ?? true,
-            foto: null
+            nama_wisata: d.nama_wisata  || "",
+            kategori:    d.kategori     || "Wisata Alam",
+            deskripsi:   d.deskripsi    || "",
+            lokasi_rute: d.lokasi_rute  || "",
+            harga_tiket: d.harga_tiket  || "",
+            kapasitas:   d.kapasitas    || "",
+            is_active:   d.is_active    ?? true,
+            foto:        null,
+            rating:      d.rating       || "",
+            koordinat:   d.koordinat    || d.coordinates || "",
+            fasilitas:   Array.isArray(d.fasilitas)
+                ? d.fasilitas.join(", ")
+                : (d.fasilitas || ""),
         });
         setPreview(d.foto || null);
         setModal(true);
@@ -71,9 +79,12 @@ export default function AdminDestinations() {
             fd.append("kapasitas", form.kapasitas);
             fd.append("is_active", form.is_active ? 1 : 0);
             if (form.foto) fd.append("foto", form.foto);
+            fd.append("kategori", form.kategori || "Wisata Alam");
+            if (form.rating)    fd.append("rating",    form.rating);
+            if (form.koordinat) fd.append("koordinat", form.koordinat);
+            if (form.fasilitas) fd.append("fasilitas", form.fasilitas);
 
             if (editData) {
-                fd.append("_method", "PUT"); // Laravel method spoofing
                 await api.post(`/admin/destinations/${editData.id}`, fd);
             } else {
                 await api.post("/admin/destinations", fd);
@@ -137,6 +148,7 @@ export default function AdminDestinations() {
                                 <tr className="bg-gray-50">
                                     <th className="text-left px-5 py-3 text-xs font-black text-gray-400 uppercase">Foto</th>
                                     <th className="text-left px-5 py-3 text-xs font-black text-gray-400 uppercase">Nama Wisata</th>
+                                    <th className="text-left px-5 py-3 text-xs font-black text-gray-400 uppercase">Kategori</th>
                                     <th className="text-left px-5 py-3 text-xs font-black text-gray-400 uppercase">Lokasi</th>
                                     <th className="text-left px-5 py-3 text-xs font-black text-gray-400 uppercase">Harga</th>
                                     <th className="text-left px-5 py-3 text-xs font-black text-gray-400 uppercase">Kapasitas</th>
@@ -159,6 +171,14 @@ export default function AdminDestinations() {
                                         </td>
                                         <td className="px-5 py-3 font-bold text-gray-900 max-w-[180px]">
                                             <p className="truncate">{d.nama_wisata}</p>
+                                        </td>
+                                        <td className="px-5 py-3">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
+                                                d.kategori === "Air Terjun" ? "bg-blue-100 text-blue-700" :
+                                                d.kategori === "Panorama"   ? "bg-purple-100 text-purple-700" :
+                                                d.kategori === "Hutan"      ? "bg-green-100 text-green-700" :
+                                                "bg-gray-100 text-gray-600"
+                                            }`}>{d.kategori || "Wisata Alam"}</span>
                                         </td>
                                         <td className="px-5 py-3 text-gray-500 text-xs max-w-[140px]">
                                             <p className="truncate">{d.lokasi_rute}</p>
@@ -237,6 +257,19 @@ export default function AdminDestinations() {
                                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
                                 </div>
 
+                                {/* Kategori */}
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Kategori <span className="text-red-400">*</span></label>
+                                    <select value={form.kategori}
+                                        onChange={e => setForm({...form, kategori: e.target.value})}
+                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
+                                        <option value="Wisata Alam">Wisata Alam</option>
+                                        <option value="Air Terjun">Air Terjun</option>
+                                        <option value="Panorama">Panorama</option>
+                                        <option value="Hutan">Hutan</option>
+                                    </select>
+                                </div>
+
                                 {/* Deskripsi */}
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Deskripsi</label>
@@ -273,6 +306,34 @@ export default function AdminDestinations() {
                                     </div>
                                 </div>
 
+                                {/* Rating */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Rating (0-5)</label>
+                                        <input type="number" value={form.rating} min="0" max="5" step="0.1"
+                                            onChange={e => setForm({...form, rating: e.target.value})}
+                                            placeholder="cth: 4.8"
+                                            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Koordinat</label>
+                                        <input type="text" value={form.koordinat}
+                                            onChange={e => setForm({...form, koordinat: e.target.value})}
+                                            placeholder="cth: 8.2291° S, 112.9157° E"
+                                            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+                                    </div>
+                                </div>
+
+                                {/* Fasilitas */}
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Fasilitas</label>
+                                    <textarea rows="2" value={form.fasilitas}
+                                        onChange={e => setForm({...form, fasilitas: e.target.value})}
+                                        placeholder="Pisahkan dengan koma: Gazebo, Toilet, Area Parkir, Warung Makan"
+                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none" />
+                                    <p className="text-xs text-gray-400">Pisahkan tiap fasilitas dengan koma (,)</p>
+                                </div>
+
                                 {/* Status toggle */}
                                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                                     <div>
@@ -281,7 +342,7 @@ export default function AdminDestinations() {
                                     </div>
                                     <button type="button" onClick={() => setForm({...form, is_active: !form.is_active})}
                                         className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${form.is_active ? "bg-emerald-500" : "bg-gray-300"}`}>
-                                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300 ${form.is_active ? "translate-x-7" : "translate-x-1"}`} />
+                                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300 ${form.is_active ? "translate-x-1" : "-translate-x-5"}`} />
                                     </button>
                                 </div>
                             </div>

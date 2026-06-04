@@ -19,6 +19,7 @@ export default function SuperAdminUsers() {
     const [roleForm,     setRoleForm]     = useState({ role: "user", destination_id: "" });
     const [saving,       setSaving]       = useState(false);
     const [error,        setError]        = useState("");
+    const [search,       setSearch]       = useState("");
 
     useEffect(() => {
         document.title = "Kelola Pengguna - Super Admin";
@@ -108,6 +109,18 @@ export default function SuperAdminUsers() {
                     </button>
                 </div>
 
+                {/* Search */}
+                <div className="mb-4">
+                    <div className="relative max-w-sm">
+                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                        </svg>
+                        <input type="text" placeholder="Cari nama, email, atau destinasi..." value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500"/>
+                    </div>
+                </div>
+
                 {loading ? (
                     <div className="space-y-3">{[...Array(5)].map((_,i) => <div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse"/>)}</div>
                 ) : (
@@ -122,7 +135,12 @@ export default function SuperAdminUsers() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {users.map(u => (
+                                {users.filter(u =>
+                                    !search ||
+                                    u.name?.toLowerCase().includes(search.toLowerCase()) ||
+                                    u.email?.toLowerCase().includes(search.toLowerCase()) ||
+                                    u.destination?.nama_wisata?.toLowerCase().includes(search.toLowerCase())
+                                ).map(u => (
                                     <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">

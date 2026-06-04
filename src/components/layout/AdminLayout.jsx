@@ -6,13 +6,14 @@ const adminMenus = [
     { path: "/admin", label: "Dashboard", icon: "📊", exact: true },
     { path: "/admin/destinasi", label: "Destinasi", icon: "🏔️" },
     { path: "/admin/tiket", label: "Tiket", icon: "🎫" },
-    { path: "/admin/ulasan", label: "Ulasan", icon: "💬" },
     { path: "/admin/scan-tiket", label: "Scan Tiket", icon: "🔍" }
 ];
 
 const superAdminMenus = [
     { path: "/super-admin", label: "Dashboard", icon: "📊", exact: true },
     { path: "/super-admin/pengguna", label: "Pengguna", icon: "👥" },
+      // Hanya tampil kalau role super_admin
+    { path: "/super-admin/ulasan", label: "Ulasan", icon: "💬", roles: ["super_admin"] },
     { path: "/super-admin/pengaturan", label: "Pengaturan", icon: "⚙️" },
     ...adminMenus.slice(1),
 ];
