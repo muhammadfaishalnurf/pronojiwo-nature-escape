@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import api from '../../api/axios';
 import Navbar from "../../components/layout/Navbar";
+import Footer from "../../components/layout/Footer";
 
-// ── Semua konstanta dan komponen helper tetap sama ──
 const getDestImage = (dbPhoto, index) => {
     if (dbPhoto && !dbPhoto.includes("placeholder") && !dbPhoto.includes("build/assets")) {
         return dbPhoto;
@@ -108,19 +108,19 @@ function CustomSelect({ value, onChange, options, placeholder, isDark }) {
                 className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-all duration-300 focus:outline-none focus:ring-1 ${isDark ? 'bg-emerald-950/50 border border-white/20 text-white focus:border-emerald-400 focus:ring-emerald-400' : 'bg-stone-50 border border-gray-200 text-gray-900 focus:border-emerald-600 focus:ring-emerald-600'}`}>
                 <div className="flex items-center gap-2 truncate">
                     {selectedOption ? (
-                        <><span className="text-base flex-shrink-0">{getCategoryIcon(selectedOption.category)}</span><span className="font-medium truncate">{selectedOption.name}</span><span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100 text-emerald-800'}`}>{formatPrice(selectedOption.price)}</span></>
+                        <><span className="font-medium truncate">{selectedOption.name}</span><span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100 text-emerald-800'}`}>{formatPrice(selectedOption.price)}</span></>
                     ) : (<span className={isDark ? 'text-white/40' : 'text-gray-400'}>{placeholder}</span>)}
                 </div>
                 <svg className={`w-4 h-4 transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180' : ''} ${isDark ? 'text-white/60' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
-            <div className={`absolute z-50 mt-1.5 w-full rounded-2xl p-2 shadow-2xl border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top transform ${isOpen ? 'opacity-100 scale-100 pointer-events-auto visible translate-y-0' : 'opacity-0 scale-95 pointer-events-none invisible -translate-y-2'} ${isDark ? 'bg-[#052217] border-white/10 text-white' : 'bg-white border-gray-100 text-gray-900'}`}>
+            <div className={`absolute z-[100] mt-1.5 w-full rounded-2xl p-2 shadow-2xl border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top transform ${isOpen ? 'opacity-100 scale-100 pointer-events-auto visible translate-y-0' : 'opacity-0 scale-95 pointer-events-none invisible translate-y-2'} ${isDark ? 'bg-[#052217] border-white/10 text-white' : 'bg-white border-gray-100 text-gray-900'}`}>
                 <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
                     {options.map((opt) => {
                         const isSelected = String(opt.id) === String(value);
                         return (
                             <button key={opt.id} type="button" onClick={() => { onChange(String(opt.id)); setIsOpen(false); }}
                                 className={`w-full flex items-center justify-between text-left px-3.5 py-2.5 rounded-xl text-xs transition-all duration-200 ${isSelected ? isDark ? 'bg-emerald-800/80 text-white font-bold' : 'bg-emerald-50 text-emerald-900 font-black' : isDark ? 'hover:bg-white/10 text-white/80' : 'hover:bg-stone-50 text-gray-700'}`}>
-                                <div className="flex items-center gap-2.5 truncate"><span className="text-base flex-shrink-0">{getCategoryIcon(opt.category)}</span><div className="truncate"><span className="block font-semibold truncate">{opt.name}</span><span className={`text-[10px] ${isDark ? 'text-white/50' : 'text-gray-400'}`}>{opt.location}</span></div></div>
+                                <div className="flex items-center gap-2.5 truncate"><div className="truncate"><span className="block font-semibold truncate">{opt.name}</span><span className={`text-[10px] ${isDark ? 'text-white/50' : 'text-gray-400'}`}>{opt.location}</span></div></div>
                                 <div className="flex items-center gap-2 flex-shrink-0"><span className={`font-bold px-2 py-0.5 rounded-md text-[10px] ${isDark ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>{formatPrice(opt.price)}</span>{isSelected && <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>}</div>
                             </button>
                         );
@@ -155,7 +155,7 @@ function CustomDatePicker({ value, onChange, isDark }) {
                 <div className="flex items-center gap-2 truncate"><svg className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg><span className={value ? 'font-medium truncate' : isDark ? 'text-white/40' : 'text-gray-400'}>{formatDateDisplay(value)}</span></div>
                 <svg className={`w-4 h-4 transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180' : ''} ${isDark ? 'text-white/60' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
-            <div className={`absolute z-50 mt-1.5 w-[290px] md:w-[310px] rounded-2xl p-4 shadow-2xl border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top-right md:origin-top transform ${isOpen ? 'opacity-100 scale-100 pointer-events-auto visible translate-y-0' : 'opacity-0 scale-95 pointer-events-none invisible -translate-y-2'} ${isDark ? 'bg-[#052217] border-white/10 text-white right-0 lg:left-0' : 'bg-white border-gray-100 text-gray-900 right-0'}`}>
+            <div className={`absolute z-[100] bottom-full mb-1.5 w-[290px] md:w-[310px] rounded-2xl p-4 shadow-2xl border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] origin-bottom transform ${isOpen ? 'opacity-100 scale-100 pointer-events-auto visible translate-y-0' : 'opacity-0 scale-95 pointer-events-none invisible translate-y-2'} ${isDark ? 'bg-[#052217] border-white/10 text-white left-0' : 'bg-white border-gray-100 text-gray-900 left-0'}`}>
                 <div className="flex items-center justify-between mb-4">
                     <button type="button" onClick={handlePrevMonth} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-white/80' : 'hover:bg-stone-100 text-gray-700'}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg></button>
                     <span className="font-bold text-xs uppercase tracking-wider">{INDO_MONTHS[viewMonth]} {viewYear}</span>
@@ -182,28 +182,43 @@ function CustomDatePicker({ value, onChange, isDark }) {
     );
 }
 
-// ── MAIN HOME COMPONENT ──
+// ── GANTI PATH GAMBAR HERO DI SINI ──
+const HERO_IMAGE = "/images/tumpak-sewu.jpg";
+
 export default function Home() {
     const { user }  = useAuth();
     const navigate  = useNavigate();
+    const location  = useLocation();
+
+    // Kalau user baru login dari halaman booking, lanjutkan ke pesan tiket
+    useEffect(() => {
+        if (user && location.state?.pendingBooking) {
+            const url = location.state.pendingBooking;
+            // Clear state agar tidak redirect ulang
+            window.history.replaceState({}, '', window.location.pathname);
+            navigate(url, { replace: true });
+        }
+    }, [user, location.state]);
 
     const [destinations, setDestinations] = useState([]);
     const [reviews,      setReviews]      = useState([]);
     const [loadingData,  setLoadingData]  = useState(true);
-
-    const [menuOpen,   setMenuOpen]   = useState(false);
-    const [scrolled,   setScrolled]   = useState(false);
+    const [scrolled,     setScrolled]     = useState(false);
     const [activeTestimonial, setActiveTestimonial] = useState(0);
     const [visibleStats, setVisibleStats] = useState(false);
-    const [counts,     setCounts]     = useState({ wisata: 0, pengunjung: 0, rating: 0 });
+    const [counts,       setCounts]       = useState({ wisata: 0, pengunjung: 0, rating: 0 });
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [selectedCategory, setSelectedCategory] = useState("Semua");
     const [selectedDestDetails, setSelectedDestDetails] = useState(null);
-
+    const [settings, setSettings] = useState({
+        app_name:        "Pronojiwo Nature Escape",
+        contact_phone:   "6281234567890",
+        contact_email:   "hello@pronojiwonature.id",
+        contact_address: "Kecamatan Pronojiwo, Lumajang, Jawa Timur",
+    });
     const [bookingDestId, setBookingDestId] = useState("");
     const [bookingQty,    setBookingQty]    = useState(1);
     const [bookingDate,   setBookingDate]   = useState("");
-
     const statsRef = useRef(null);
 
     useEffect(() => { document.title = "Pronojiwo Nature Escape - Surga Tersembunyi Lumajang"; }, []);
@@ -212,6 +227,7 @@ export default function Home() {
         const fetchData = async () => {
             try { const res = await api.get('/destinations'); const d = res.data?.data || res.data || []; setDestinations(Array.isArray(d) ? d : []); } catch { setDestinations([]); }
             try { const res = await api.get('/reviews'); const d = res.data?.data || res.data || []; setReviews(Array.isArray(d) ? d : []); } catch { setReviews([]); }
+            try { const res = await api.get('/settings'); if (res.data) setSettings(prev => ({ ...prev, ...res.data })); } catch {}
             setLoadingData(false);
         };
         fetchData();
@@ -237,15 +253,12 @@ export default function Home() {
 
     useEffect(() => {
         if (!visibleStats) return;
-        const steps = 60;
-        let step = 0;
+        const steps = 60; let step = 0;
         const targetWisata = destinations.length || 6;
-        const targetReview = 1500;
-        const targetRating = 4.8;
         const timer = setInterval(() => {
             step++;
             const ease = 1 - Math.pow(1 - step / steps, 3);
-            setCounts({ wisata: Math.floor(ease * targetWisata), pengunjung: Math.floor(ease * targetReview), rating: parseFloat((ease * targetRating).toFixed(1)) });
+            setCounts({ wisata: Math.floor(ease * targetWisata), pengunjung: Math.floor(ease * 1500), rating: parseFloat((ease * 4.8).toFixed(1)) });
             if (step >= steps) clearInterval(timer);
         }, 1500 / steps);
         return () => clearInterval(timer);
@@ -260,31 +273,34 @@ export default function Home() {
 
     const formatPrice = (num) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(num);
 
+    // ── FIX: fasilitas & koordinat dari API ──
     const activeDestinations = destinations.length > 0
         ? destinations.map((d, index) => ({
             id: d.id,
             name: d.nama_wisata || "Destinasi Wisata",
             location: d.lokasi_rute || "Pronojiwo, Lumajang",
-            category: getDestCategory(d.nama_wisata),
+            category: d.kategori || getDestCategory(d.nama_wisata),
             rating: parseFloat(d.rating) || 4.8,
             reviewCount: 20 + index * 13,
             image: getDestImage(d.foto, index),
             description: d.deskripsi || "Keindahan alam Pronojiwo yang menakjubkan dan asri.",
             price: parseFloat(d.harga_tiket) || 15000,
             capacity: d.kapasitas || 150,
-            facilities: ["Spot foto", "Toilet", "Area parkir"],
-            coordinates: "8.2195° S, 112.9234° E"
+            facilities: d.fasilitas
+                ? d.fasilitas.split(',').map(f => f.trim()).filter(Boolean)
+                : ["Spot foto", "Toilet", "Area parkir"],
+            coordinates: d.koordinat || "—"
         }))
         : defaultDestinations;
 
     const activeTestimonials = reviews.length > 0
         ? reviews.map((r) => ({
-            name: r.nama || r.user?.name || "Pengunjung Anonim",
-            location: r.destinasi || r.destination?.nama_wisata || "Wisata Alam",
+            name: r.nama_display || r.nama || r.user?.name || "Pengunjung Anonim",
+            location: r.destination?.nama_wisata || "Wisata Alam",
             rating: r.rating || 5,
             text: r.ulasan || "Pengalaman liburan yang luar biasa di Pronojiwo.",
-            avatar: (r.nama || r.user?.name || "PA").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
-            date: r.created_at ? new Date(r.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "Baru-baru ini"
+            avatar: (r.nama_display || r.nama || r.user?.name || "PA").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
+            date: r.tanggal_label || (r.created_at ? new Date(r.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "Baru-baru ini")
         }))
         : defaultTestimonials;
 
@@ -293,18 +309,12 @@ export default function Home() {
     const bookingTax      = selectedBookingDest ? Math.round(bookingSubtotal * 0.05) : 0;
     const bookingTotal    = bookingSubtotal + bookingTax;
 
-    // ── UPDATED: redirect ke halaman booking, cek login ──
     const goToBooking = (destId, date, qty) => {
         const params = new URLSearchParams({ dest: destId });
         if (date) params.set("date", date);
         params.set("qty", qty || 1);
         const bookingUrl = `/pesan-tiket?${params.toString()}`;
-
-        if (!user) {
-            sessionStorage.setItem("booking_redirect", bookingUrl);
-            navigate("/login");
-            return;
-        }
+        if (!user) { navigate("/login"); return; }
         navigate(bookingUrl);
     };
 
@@ -317,9 +327,8 @@ export default function Home() {
 
     const handleDirectBook = (dest) => {
         setSelectedDestDetails(null);
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        goToBooking(dest.id, tomorrow.toISOString().split("T")[0], 1);
+        const today = new Date();
+        goToBooking(dest.id, today.toISOString().split("T")[0], 1);
     };
 
     const categories = ["Semua", "Air Terjun", "Panorama", "Hutan"];
@@ -335,69 +344,34 @@ export default function Home() {
 
             <Navbar scrolled={scrolled} />
 
-            {/* Mobile Menu */}
-            <div className={`lg:hidden fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm transition-all duration-500 ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setMenuOpen(false)} />
-            <div className={`lg:hidden fixed top-0 right-0 bottom-0 z-[9999] w-[88vw] max-w-sm flex flex-col transform transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`} style={{ background: 'linear-gradient(160deg, #022c22 0%, #041c14 60%, #021a10 100%)' }}>
-                <div className="flex items-center justify-between px-6 pt-8 pb-5">
-                    <div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-sm shadow-xl">WAP</div><div className="leading-tight"><span className="block text-[9px] font-black text-emerald-400 tracking-[0.2em] uppercase">Wisata Alam</span><span className="block font-black text-lg text-white">PRONOJIWO</span></div></div>
-                    <button className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-white/70 hover:text-white transition-all" onClick={() => setMenuOpen(false)}><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
-                </div>
-                <div className="flex-1 overflow-y-auto px-4 pb-4"><div className="flex flex-col gap-2 mt-4">{navLinks.map((link) => (<a key={link.id} href={`#${link.id}`} className="flex items-center gap-4 px-4 py-4 rounded-2xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.07] text-white font-bold text-sm transition-all" onClick={() => setMenuOpen(false)}>{link.name}</a>))}</div></div>
-                <div className="px-5 pt-4 pb-8">
-                    <Link to="/login" className="flex items-center justify-center w-full py-3.5 rounded-2xl font-bold text-sm text-white border border-white/15 bg-white/[0.05] hover:bg-white/[0.10] transition-all mb-3" onClick={() => setMenuOpen(false)}>Masuk ke Akun</Link>
-                    <Link to="/register" className="flex items-center justify-center w-full py-4 rounded-2xl font-black text-sm text-emerald-950 bg-gradient-to-r from-emerald-400 to-teal-400 shadow-2xl transition-all" onClick={() => setMenuOpen(false)}>Daftar Sekarang — Gratis!</Link>
-                </div>
-            </div>
 
-            {/* ── HERO ── */}
-            <section id="beranda" className="relative min-h-screen flex items-center justify-center px-6 lg:px-8 pt-32 pb-28 overflow-hidden bg-emerald-950">
-                <div className="absolute inset-0 bg-cover bg-center scale-105" style={{ backgroundImage: "linear-gradient(180deg, rgba(2, 44, 34, 0.92) 0%, rgba(2, 44, 34, 0.75) 50%, rgba(2, 44, 34, 0.95) 100%), url('/images/download.jpg')", transform: `translate(${mousePosition.x * 0.4}px, ${mousePosition.y * 0.4}px) scale(1.1)` }} />
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }}></div>
-                    <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }}></div>
-                </div>
+            {/* HERO */}
+            <section id="beranda" className="relative min-h-screen flex items-center justify-center px-6 lg:px-8 pt-32 pb-28 overflow-hidden bg-gray-950">
+                <div className="absolute inset-0 bg-cover bg-center scale-105" style={{ backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.70) 100%), url(${HERO_IMAGE})`, transform: `translate(${mousePosition.x * 0.4}px, ${mousePosition.y * 0.4}px) scale(1.1)` }} />
 
                 <div className="relative z-10 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
                     <div className="lg:col-span-7 text-left space-y-6">
                         <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/45 backdrop-blur-md"><span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span></span><span className="text-emerald-300 text-[10px] font-extrabold tracking-widest uppercase">✦ ECO-PARADISE INDONESIA</span></div>
-                        <h1 className="text-5xl md:text-7xl font-bold leading-[1.2] text-white">Jelajahi Serpihan<span className="block italic font-medium bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-200 text-transparent bg-clip-text mt-4 mb-2">Surga Tersembunyi</span>di Pronojiwo Lumajang</h1>
-                        <p className="text-white/80 text-lg md:text-xl leading-relaxed max-w-2xl font-light">Rasakan petualangan mistis di jantung Lumajang. Dari canyon air terjun Tumpak Sewu yang kolosal hingga udara pinus yang menenangkan jiwa.</p>
+                        <h1 className="text-5xl md:text-7xl font-bold leading-[1.2] text-white">Jelajahi Serpihan<span className="block italic font-medium bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-200 text-transparent bg-clip-text mt-4 mb-2 pb-1">Surga Tersembunyi</span>di Pronojiwo Lumajang</h1>
+                        <p className="text-white/80 text-lg md:text-xl leading-relaxed max-w-2xl font-light">asakan petualangan mistis di jantung Lumajang. Jelajahi pesona Air Terjun Tumpak Sewu yang megah dan nikmati kesejukan hutan pinus yang menenangkan jiwa.</p>
                         <div className="flex flex-wrap gap-4 pt-4">
                             <a href="#destinasi" className="group px-8 py-4 rounded-full font-bold text-base text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 shadow-2xl transition-all duration-300 hover:scale-105 flex items-center gap-2.5">Mulai Menjelajah<svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path></svg></a>
                             <a href="#tiket" className="px-8 py-4 rounded-full font-bold text-base text-white border-2 border-white/30 hover:border-white hover:bg-white/5 transition-all duration-300 flex items-center gap-2.5">Pesan E-Tiket</a>
                         </div>
                         <div className="grid grid-cols-3 gap-6 pt-10 border-t border-white/10 max-w-lg">
-                            <div><div className="text-3xl font-black text-white">10+</div><div className="text-xs text-white/50 font-bold uppercase tracking-wider mt-1">Destinasi</div></div>
-                            <div><div className="text-3xl font-black text-white">1.2K+</div><div className="text-xs text-white/50 font-bold uppercase tracking-wider mt-1">Pecinta Alam</div></div>
-                            <div><div className="text-3xl font-black text-white">4.9★</div><div className="text-xs text-white/50 font-bold uppercase tracking-wider mt-1">Rating Review</div></div>
+                            <div><div className="text-3xl font-black text-white">{counts.wisata}+</div><div className="text-xs text-white/50 font-bold uppercase tracking-wider mt-1">Destinasi</div></div>
+                            <div><div className="text-3xl font-black text-white">{counts.pengunjung}+</div><div className="text-xs text-white/50 font-bold uppercase tracking-wider mt-1">Pecinta Alam</div></div>
+                            <div><div className="text-3xl font-black text-white">{counts.rating}/5★</div><div className="text-xs text-white/50 font-bold uppercase tracking-wider mt-1">Rating Review</div></div>
                         </div>
                     </div>
-
-                    {/* Booking Card Hero — sekarang redirect ke /pesan-tiket */}
                     <div className="lg:col-span-5 w-full">
                         <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 md:p-8 shadow-3xl">
                             <form onSubmit={handleQuickBookingSubmit} className="space-y-5">
-                                <div>
-                                    <h3 className="text-2xl font-bold text-white mb-1">Tiket Masuk Instan</h3>
-                                    <p className="text-white/60 text-xs">Pesan digital tiket Anda secara langsung & aman.</p>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-white/80 font-bold text-xs uppercase tracking-wider">Destinasi Wisata</label>
-                                    <CustomSelect value={bookingDestId} onChange={setBookingDestId} options={activeDestinations} placeholder="-- Pilih Destinasi --" isDark={true} />
-                                </div>
+                                <div><h3 className="text-2xl font-bold text-white mb-1">Tiket Masuk Instan</h3><p className="text-white/60 text-xs">Pesan digital tiket Anda secara langsung & aman.</p></div>
+                                <div className="space-y-1.5"><label className="text-white/80 font-bold text-xs uppercase tracking-wider">Destinasi Wisata</label><CustomSelect value={bookingDestId} onChange={setBookingDestId} options={activeDestinations} placeholder="-- Pilih Destinasi --" isDark={true} /></div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-white/80 font-bold text-xs uppercase tracking-wider">Tanggal Kunjungan</label>
-                                        <CustomDatePicker value={bookingDate} onChange={setBookingDate} isDark={true} />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-white/80 font-bold text-xs uppercase tracking-wider">Jumlah Tiket</label>
-                                        <div className="flex items-center bg-emerald-950/50 border border-white/20 rounded-xl px-2 py-1.5">
-                                            <button type="button" onClick={() => setBookingQty(Math.max(1, bookingQty - 1))} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center hover:bg-white/20">-</button>
-                                            <span className="flex-1 text-center text-white font-black text-sm">{bookingQty}</span>
-                                            <button type="button" onClick={() => setBookingQty(bookingQty + 1)} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center hover:bg-white/20">+</button>
-                                        </div>
-                                    </div>
+                                    <div className="space-y-1.5"><label className="text-white/80 font-bold text-xs uppercase tracking-wider">Tanggal Kunjungan</label><CustomDatePicker value={bookingDate} onChange={setBookingDate} isDark={true} /></div>
+                                    <div className="space-y-1.5"><label className="text-white/80 font-bold text-xs uppercase tracking-wider">Jumlah Tiket</label><div className="flex items-center bg-emerald-950/50 border border-white/20 rounded-xl px-2 py-1.5"><button type="button" onClick={() => setBookingQty(Math.max(1, bookingQty - 1))} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center hover:bg-white/20">-</button><span className="flex-1 text-center text-white font-black text-sm">{bookingQty}</span><button type="button" onClick={() => setBookingQty(bookingQty + 1)} className="w-8 h-8 rounded-lg bg-white/10 text-white font-bold flex items-center justify-center hover:bg-white/20">+</button></div></div>
                                 </div>
                                 {selectedBookingDest && (
                                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2 text-xs">
@@ -406,32 +380,35 @@ export default function Home() {
                                         <div className="border-t border-white/10 pt-2 flex justify-between font-bold text-sm"><span className="text-amber-300">Total Biaya:</span><span className="text-lg text-white font-black">{formatPrice(bookingTotal)}</span></div>
                                     </div>
                                 )}
-                                <button type="submit" className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-emerald-950 font-black text-sm uppercase tracking-widest shadow-xl transition-all duration-300">
-                                    {user ? "Lanjut Isi Data →" : "Login & Pesan Tiket →"}
-                                </button>
+                                <button type="submit" className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-emerald-950 font-black text-sm uppercase tracking-widest shadow-xl transition-all duration-300">{user ? "Lanjut Isi Data →" : "Login & Pesan Tiket →"}</button>
                                 {!user && <p className="text-center text-white/40 text-xs">Kamu akan diarahkan ke halaman login</p>}
                             </form>
                         </div>
                     </div>
                 </div>
 
+
+                {/* Fade bawah hero — ke hijau tua */}
+                <div className="absolute bottom-0 left-0 right-0 h-52 pointer-events-none"
+                    style={{ background: "linear-gradient(to bottom, transparent 0%, rgba(2,44,34,0.5) 50%, rgba(2,44,34,0.88) 80%, rgb(2,44,34) 100%)" }} />
+
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-70"><span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Gulir ke bawah</span><div className="w-5 h-9 border-2 border-white/30 rounded-full flex justify-center p-1"><div className="w-1 h-2.5 bg-emerald-400 rounded-full animate-scroll"></div></div></div>
             </section>
 
-            {/* ── STATS ── */}
-            <section ref={statsRef} className="relative py-16 bg-gradient-to-b from-emerald-950 to-white">
+            {/* STATS */}
+            <section ref={statsRef} className="relative py-16 bg-gradient-to-b from-[#022c22] to-white">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
                             <div className="py-6 md:py-0 md:px-6 space-y-2"><div className="text-5xl font-black text-amber-300">{counts.wisata}+</div><div className="text-lg font-bold text-white italic">Total Destinasi</div><p className="text-white/60 text-xs max-w-[200px] mx-auto">Kawasan wisata alam terintegrasi dan teregistrasi.</p></div>
                             <div className="py-6 md:py-0 md:px-6 space-y-2"><div className="text-5xl font-black text-white">{counts.pengunjung.toLocaleString()}+</div><div className="text-lg font-bold text-white italic">Review Wisatawan</div><p className="text-white/60 text-xs max-w-[200px] mx-auto">Ulasan nyata bintang 4 keatas oleh pelancong.</p></div>
-                            <div className="py-6 md:py-0 md:px-6 space-y-2"><div className="text-5xl font-black text-emerald-400 flex items-center justify-center gap-1">{counts.rating} <span className="text-amber-400 text-3xl">★</span></div><div className="text-lg font-bold text-white italic">Rating Kepuasan</div><p className="text-white/60 text-xs max-w-[200px] mx-auto">Pengalaman petualangan bernilai luar biasa.</p></div>
+                            <div className="py-6 md:py-0 md:px-6 space-y-2"><div className="text-5xl font-black text-emerald-400 flex items-center justify-center gap-1">{counts.rating}/5 <span className="text-amber-400 text-3xl">★</span></div><div className="text-lg font-bold text-white italic">Rating Kepuasan</div><p className="text-white/60 text-xs max-w-[200px] mx-auto">Pengalaman petualangan bernilai luar biasa.</p></div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* ── DESTINASI ── */}
+            {/* DESTINASI */}
             <section id="destinasi" className="relative bg-white py-24 px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
@@ -448,7 +425,8 @@ export default function Home() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {filteredDestinations.map((dest) => (
-                                <div key={dest.id} className="group bg-stone-50 rounded-3xl overflow-hidden shadow-md hover:shadow-2xl border border-gray-100 transition-all duration-500 flex flex-col">
+                                // ── FIX: seluruh card bisa diklik ──
+                                <div key={dest.id} onClick={() => setSelectedDestDetails(dest)} className="group bg-stone-50 rounded-3xl overflow-hidden shadow-md hover:shadow-2xl border border-gray-100 hover:border-emerald-200 transition-all duration-500 flex flex-col cursor-pointer">
                                     <div className="relative h-64 overflow-hidden">
                                         <img src={dest.image} alt={dest.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
                                         <div className="absolute inset-0 bg-gradient-to-t from-gray-950/70 via-gray-950/10 to-transparent"></div>
@@ -464,7 +442,8 @@ export default function Home() {
                                         </div>
                                         <div className="border-t border-gray-100 pt-5 mt-5 flex items-center justify-between">
                                             <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wide">Kuota: <span className="text-emerald-700 font-black">{dest.capacity}/hari</span></span>
-                                            <button onClick={() => setSelectedDestDetails(dest)} className="px-5 py-2.5 rounded-full font-extrabold text-xs text-emerald-800 bg-emerald-50 hover:bg-emerald-800 hover:text-white transition-all duration-300 border border-emerald-100/50">Detail Destinasi →</button>
+                                            {/* ── FIX: span bukan button ── */}
+                                            <span className="px-5 py-2.5 rounded-full font-extrabold text-xs text-emerald-800 bg-emerald-50 group-hover:bg-emerald-800 group-hover:text-white transition-all duration-300 border border-emerald-100/50 pointer-events-none">Detail Destinasi →</span>
                                         </div>
                                     </div>
                                 </div>
@@ -474,7 +453,7 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* ── KEUNGGULAN ── */}
+            {/* KEUNGGULAN */}
             <section className="bg-stone-50 py-24 px-6 lg:px-8 relative overflow-hidden">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
@@ -496,7 +475,7 @@ export default function Home() {
                 <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none z-10 translate-y-[2px]"><svg className="relative block w-full h-[60px]" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V0C26.9,8.75,57.05,18.3,88.43,26.85,152.42,44.3,222.21,68.75,321.39,56.44Z" className="fill-emerald-950"></path></svg></div>
             </section>
 
-            {/* ── TESTIMONI ── */}
+            {/* TESTIMONI */}
             <section id="testimoni" className="relative bg-emerald-950 py-24 px-6 lg:px-8 overflow-hidden">
                 <div className="relative max-w-4xl mx-auto z-10">
                     <div className="text-center space-y-4 mb-16">
@@ -518,7 +497,7 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* ── BOOKING SECTION — redirect ke /pesan-tiket ── */}
+            {/* BOOKING */}
             <section id="tiket" className="relative py-24 bg-stone-50 px-6 lg:px-8 border-b border-gray-100">
                 <div className="max-w-4xl mx-auto">
                     <div className="text-center space-y-4 mb-16">
@@ -547,16 +526,14 @@ export default function Home() {
                             ) : (
                                 <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-sm">Isi form di atas untuk melihat kalkulasi biaya tiket.</div>
                             )}
-                            <button type="submit" className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-600 hover:to-teal-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl transition-all duration-300">
-                                {user ? "Lanjut Isi Data Pemesanan →" : "Login & Pesan Tiket →"}
-                            </button>
+                            <button type="submit" className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-600 hover:from-emerald-600 hover:to-teal-500 text-white font-bold text-sm uppercase tracking-widest shadow-xl transition-all duration-300">{user ? "Lanjut Isi Data Pemesanan →" : "Login & Pesan Tiket →"}</button>
                             {!user && <p className="text-center text-gray-400 text-xs">Kamu akan diarahkan ke halaman login terlebih dahulu</p>}
                         </form>
                     </div>
                 </div>
             </section>
 
-            {/* ── KONTAK ── */}
+            {/* KONTAK */}
             <section id="kontak" className="relative py-24 bg-white px-6 lg:px-8">
                 <div className="max-w-6xl mx-auto">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -565,53 +542,78 @@ export default function Home() {
                             <h2 className="text-4xl font-bold tracking-tight text-gray-950">Siap Berpetualang <span className="italic font-medium text-emerald-700">Bersama Kami?</span></h2>
                             <p className="text-gray-500 text-sm leading-relaxed">Punya kendala rute, butuh akomodasi homestay, atau ingin merancang trip rombongan? Tim kami siap melayani 24/7.</p>
                             <div className="space-y-4 pt-4">
-                                {[{ icon: "📍", title: "Kantor Informasi Wisata", text: "Kecamatan Pronojiwo, Lumajang, Jawa Timur" }, { icon: "📞", title: "Hotline Layanan Turis", text: "+62 812-3456-7890 (WA / Telp)" }, { icon: "✉️", title: "Surel Korespondensi", text: "hello@pronojiwonature.id" }].map(c => (
+                                {[
+                                    { icon: "📍", title: "Kantor Informasi Wisata", text: settings.contact_address },
+                                    { icon: "📞", title: "Hotline Layanan Turis",   text: settings.contact_phone ? `+${settings.contact_phone.replace(/^\+/, '')}` : "-" },
+                                    { icon: "✉️", title: "Surel Korespondensi",    text: settings.contact_email },
+                                ].map(c => (
                                     <div key={c.text} className="flex gap-4 p-4 rounded-2xl bg-stone-50 border border-gray-100 hover:border-emerald-100 transition-colors"><div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-lg flex-shrink-0">{c.icon}</div><div><span className="block font-bold text-[10px] uppercase text-gray-400">{c.title}</span><span className="font-semibold text-xs text-gray-800 mt-0.5 block">{c.text}</span></div></div>
                                 ))}
                             </div>
                         </div>
                         <div className="lg:col-span-7 bg-stone-50 border border-gray-200/50 rounded-3xl p-6 md:p-8 shadow-xl">
-                            <h3 className="text-xl font-bold text-gray-950 mb-1">Kirim Pesan Instan</h3>
-                            <p className="text-xs text-gray-400 mb-6">Ajukan pertanyaan Anda secara tertulis dan cepat.</p>
-                            <form onSubmit={(e) => { e.preventDefault(); alert("Pesan Anda telah terkirim! Tim kami akan membalas dalam 1x24 jam."); e.target.reset(); }} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4"><div className="space-y-1"><label className="text-xs font-bold text-gray-500">Nama Lengkap</label><input type="text" placeholder="cth: Ahmad Dani" required className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-900 focus:outline-none focus:border-emerald-600 transition-all" /></div><div className="space-y-1"><label className="text-xs font-bold text-gray-500">Alamat Surel</label><input type="email" placeholder="cth: dani@email.com" required className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-900 focus:outline-none focus:border-emerald-600 transition-all" /></div></div>
-                                <div className="space-y-1"><label className="text-xs font-bold text-gray-500">Subjek Pertanyaan</label><input type="text" placeholder="cth: Sewa Guide lokal / Reservasi Homestay" required className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-900 focus:outline-none focus:border-emerald-600 transition-all" /></div>
-                                <div className="space-y-1"><label className="text-xs font-bold text-gray-500">Isi Pesan</label><textarea rows="4" placeholder="Tuliskan pertanyaan Anda..." required className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-900 focus:outline-none focus:border-emerald-600 transition-all resize-none"></textarea></div>
-                                <button type="submit" className="w-full py-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg transition-all duration-300">Kirim Pesan Sekarang</button>
-                            </form>
+                            <h3 className="text-xl font-bold text-gray-950 mb-1">Kirim Pesan via WhatsApp</h3>
+                            <p className="text-xs text-gray-400 mb-6">Klik tombol di bawah untuk langsung chat dengan tim kami di WhatsApp.</p>
+
+                            {/* Preview pesan */}
+                            <div className="bg-white border border-gray-100 rounded-2xl p-4 mb-6 space-y-3">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Nama Anda</label>
+                                    <input id="wa-name" type="text" placeholder="cth: Ahmad Dani"
+                                        className="w-full bg-stone-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-600 transition-all" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Pesan / Pertanyaan</label>
+                                    <textarea id="wa-msg" rows="3" placeholder="cth: Saya ingin tanya info tiket Air Terjun Tumpak Sewu..."
+                                        className="w-full bg-stone-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-600 transition-all resize-none"/>
+                                </div>
+                            </div>
+
+                            <a
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    const name = document.getElementById("wa-name")?.value || "";
+                                    const msg  = document.getElementById("wa-msg")?.value  || "";
+                                    const text = `Halo, saya ${name || "pengunjung"}. ${msg || "Saya ingin bertanya tentang wisata Pronojiwo."}`;
+                                    const phone = settings.contact_phone?.replace(/[^0-9]/g, "") || "6281234567890";
+                                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
+                                }}
+                                className="flex items-center justify-center gap-3 w-full py-4 rounded-xl bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black text-sm shadow-lg transition-all duration-300">
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                </svg>
+                                Chat via WhatsApp
+                            </a>
+
+                            <p className="text-center text-xs text-gray-400 mt-3">
+                                Akan membuka WhatsApp dengan nomor: +{settings.contact_phone?.replace(/[^0-9]/g, "") || "-"}
+                            </p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* ── FOOTER ── */}
-            <footer className="bg-gradient-to-br from-emerald-950 via-gray-950 to-emerald-950 text-white/70 pt-20 pb-8 px-6 lg:px-8 border-t border-white/5">
-                <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-white/10">
-                        <div className="md:col-span-5 space-y-6"><div className="flex items-center gap-3"><div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white font-black text-sm shadow-xl">WAP</div><div className="leading-tight"><span className="block font-black text-[9px] text-emerald-400 tracking-wider">WISATA ALAM</span><span className="block font-black text-lg text-white">PRONOJIWO</span></div></div><p className="text-sm text-white/60 leading-relaxed max-w-sm font-light">Pronojiwo Nature Escape adalah media resmi reservasi & pariwisata terpadu kawasan Kecamatan Pronojiwo, Lumajang.</p></div>
-                        <div className="md:col-span-3 space-y-5"><h4 className="text-white font-bold text-sm uppercase tracking-widest border-l-2 border-emerald-500 pl-3">Navigasi</h4><div className="flex flex-col gap-3.5 text-sm font-semibold">{navLinks.map((link) => (<a key={link.id} href={`#${link.id}`} className="hover:text-emerald-400 transition-colors w-fit">→ {link.name}</a>))}</div></div>
-                        <div className="md:col-span-4 space-y-5"><h4 className="text-white font-bold text-sm uppercase tracking-widest border-l-2 border-emerald-500 pl-3">Info Buletin</h4><p className="text-xs text-white/50 leading-relaxed">Dapatkan info promo musiman dan update wisata Pronojiwo gratis.</p><form onSubmit={(e) => { e.preventDefault(); alert("Terima kasih! Anda berlangganan info Pronojiwo."); e.target.reset(); }} className="flex flex-col sm:flex-row gap-2"><input type="email" placeholder="Alamat surel Anda" required className="bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-xs text-white placeholder-white/35 focus:outline-none focus:border-emerald-500 flex-1 transition-all" /><button type="submit" className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-bold text-xs text-white transition-colors">Gabung</button></form></div>
-                    </div>
-                    <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-semibold text-white/40"><p>© 2026 Wisata Alam Pronojiwo. Hak cipta dilindungi undang-undang.</p><p className="flex items-center gap-1.5">Terbuat dengan <span className="text-red-500 animate-pulse text-sm">♥</span> untuk pariwisata lestari Lumajang.</p></div>
-                </div>
-            </footer>
+            <Footer />
 
-            {/* ── DESTINATION DETAIL MODAL ── */}
+            {/* MODAL DETAIL DESTINASI */}
             {selectedDestDetails && (
                 <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-950/80 backdrop-blur-md flex items-center justify-center p-4 md:p-6">
                     <div className="bg-white border border-gray-100 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative">
                         <button onClick={() => setSelectedDestDetails(null)} className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-gray-950/40 hover:bg-gray-950/80 text-white flex items-center justify-center transition-colors">✕</button>
                         <div className="h-64 relative"><img src={selectedDestDetails.image} alt={selectedDestDetails.name} className="w-full h-full object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-gray-950/70 via-transparent to-transparent"></div><div className="absolute bottom-4 left-6 space-y-1"><span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">{selectedDestDetails.category}</span><h3 className="text-2xl md:text-3xl font-bold text-white">{selectedDestDetails.name}</h3></div></div>
                         <div className="p-6 md:p-8 space-y-6 max-h-[50vh] overflow-y-auto">
-                            <div className="grid grid-cols-3 gap-2 border-b border-gray-100 pb-4 text-center"><div><span className="text-[10px] text-gray-400 font-bold uppercase block">Harga Masuk</span><span className="font-black text-sm text-emerald-800">{formatPrice(selectedDestDetails.price)}</span></div><div><span className="text-[10px] text-gray-400 font-bold uppercase block">Koordinat</span><span className="font-bold text-gray-600 text-xs">{selectedDestDetails.coordinates}</span></div><div><span className="text-[10px] text-gray-400 font-bold uppercase block">Rating</span><span className="font-black text-sm text-amber-500">★ {selectedDestDetails.rating}</span></div></div>
+                            <div className="grid grid-cols-3 gap-2 border-b border-gray-100 pb-4 text-center">
+                                <div><span className="text-[10px] text-gray-400 font-bold uppercase block">Harga Masuk</span><span className="font-black text-sm text-emerald-800">{formatPrice(selectedDestDetails.price)}</span></div>
+                                <div><span className="text-[10px] text-gray-400 font-bold uppercase block">Koordinat</span><span className="font-bold text-gray-600 text-xs">{selectedDestDetails.coordinates}</span></div>
+                                <div><span className="text-[10px] text-gray-400 font-bold uppercase block">Rating</span><span className="font-black text-sm text-amber-500">★ {selectedDestDetails.rating}</span></div>
+                            </div>
                             <div className="space-y-2"><h4 className="text-xs font-extrabold uppercase text-gray-400 tracking-wider">Deskripsi</h4><p className="text-gray-600 text-sm leading-relaxed">{selectedDestDetails.description}</p></div>
-                            <div className="space-y-3"><h4 className="text-xs font-extrabold uppercase text-gray-400 tracking-wider">Fasilitas</h4><div className="flex flex-wrap gap-2">{selectedDestDetails.facilities.map((fac, idx) => (<span key={idx} className="px-3 py-1.5 rounded-xl bg-stone-50 border border-gray-100 text-xs font-semibold text-gray-600">🏕️ {fac}</span>))}</div></div>
+                            <div className="space-y-3"><h4 className="text-xs font-extrabold uppercase text-gray-400 tracking-wider">Fasilitas</h4><div className="flex flex-wrap gap-2">{selectedDestDetails.facilities.map((fac, idx) => (<span key={idx} className="px-3 py-1.5 rounded-xl bg-stone-50 border border-gray-100 text-xs font-semibold text-gray-600">{fac}</span>))}</div></div>
                         </div>
                         <div className="bg-stone-50 border-t border-gray-100 p-6 flex justify-end gap-3">
                             <button onClick={() => setSelectedDestDetails(null)} className="px-5 py-2.5 rounded-full text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors">Kembali</button>
-                            <button onClick={() => handleDirectBook(selectedDestDetails)} className="px-6 py-2.5 rounded-full bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg transition-all">
-                                {user ? "Pesan E-Tiket Sekarang" : "Login & Pesan Tiket"}
-                            </button>
+                            <button onClick={() => handleDirectBook(selectedDestDetails)} className="px-6 py-2.5 rounded-full bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg transition-all">{user ? "Pesan E-Tiket Sekarang" : "Login & Pesan Tiket"}</button>
                         </div>
                     </div>
                 </div>

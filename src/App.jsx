@@ -11,7 +11,6 @@ import MyTickets from './pages/user/MyTickets';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminDest from './pages/admin/Destinations';
 import AdminTickets from './pages/admin/Tickets';
-import AdminReviews from './pages/admin/Reviews';
 import SADashboard from './pages/superadmin/Dashboard';
 import SAUsers from './pages/superadmin/Users';
 import SASettings from './pages/superadmin/Settings';
@@ -19,12 +18,15 @@ import PaymentPage from './pages/payment/PaymentPage';
 import PaymentSuccessPage from './pages/payment/PaymentSuccessPage';
 import BookingPage from './pages/booking/BookingPage';
 import AdminTicketScanner from './pages/admin/TicketScanner';
+import SuperAdminReviews from './pages/superadmin/Reviews';
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
+          {/* Ulasan */}
+          <Route path="/super-admin/ulasan" element={<RoleRoute roles={['super_admin']}><SuperAdminReviews /></RoleRoute>} />
           {/* Tiket */}
           <Route path="/admin/scan-tiket" element={<RoleRoute roles={['admin','super_admin']}><AdminTicketScanner /></RoleRoute>} />
           {/* Booking */}
@@ -56,11 +58,6 @@ export default function App() {
           <Route path="/admin/tiket" element={
             <RoleRoute roles={['admin', 'super_admin']}>
               <AdminTickets />
-            </RoleRoute>
-          } />
-          <Route path="/admin/ulasan" element={
-            <RoleRoute roles={['admin', 'super_admin']}>
-              <AdminReviews />
             </RoleRoute>
           } />
 
